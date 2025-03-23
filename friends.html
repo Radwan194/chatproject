@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends</title>
+    <style>
+       /* General Styling */
+/* General Styling */
+body {
+    font-family: "Poppins", Arial, sans-serif;
+    background-color: #121212; /* Dark background */
+    color: #e0e0e0;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+}
+
+/* Search Bar */
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+input {
+    padding: 12px;
+    width: 250px;
+    background: #1e1e1e;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    outline: none;
+    color: #ffffff;
+    transition: all 0.3s;
+}
+
+input:focus {
+    border-color: #1a73e8;
+    box-shadow: 0 0 8px rgba(26, 115, 232, 0.5);
+}
+
+/* Buttons */
+button {
+    padding: 12px 15px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+button:hover {
+    background-color: #1a73e8;
+}
+
+/* Friend Lists */
+.friend-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* Friend Cards */
+.friend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 80%;
+    max-width: 500px;
+    background: #1e1e1e;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.friend:hover {
+    transform: translateY(-3px);
+}
+
+.friend span {
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .friend {
+        width: 95%;
+    }
+    input {
+        width: 200px;
+    }
+}
+
+    </style>
+</head>
+
+<body>
+
+    <h2>Hello, <span id="username"></span></h2>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search for users...">
+        <button onclick="searchUsers()">Search</button>
+    </div>
+
+    <!-- Pending Friend Requests -->
+    <h3>Pending Friend Requests</h3>
+    <div id="pending-requests" class="friend-list"></div>
+
+    <!-- Friends List -->
+    <h3>Your Friends</h3>
+    <div id="friends-list" class="friend-list"></div>
+
+    <!-- Search Results -->
+    <h3>Search Results</h3>
+    <div id="search-results" class="friend-list"></div>
+
+    <script>
+        const username = localStorage.getItem("username");
+        document.getElementById("username").textContent = username;
+
+        async function fetchFriends() {
+
+
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    console.error("No token found. User is not authenticated.");
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:3000/friends?username=${username}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                const data = await response.json();
+
+
+                if (!data.success) {
+                    console.error("Error:", data.message);
+                    return;
+                }
+
+                const friendsList = document.getElementById("friends-list");
+                friendsList.innerHTML = "";
+
+                if (!Array.isArray(data.friends) || data.friends.length === 0) {
+                    friendsList.innerHTML = "<p>No friends found.</p>";
+                    return;
+                }
+
+                data.friends.forEach(friend => {
+                    const div = document.createElement("div");
+                    div.className = "friend";
+                    div.innerHTML = `
+                        <span>${friend}</span>
+                        <button onclick="startChat('${friend}')">Chat</button>
+                    `;
+                    friendsList.appendChild(div);
+                });
+
+
+            } catch (error) {
+                console.error("Error fetching friends:", error);
+            }
+        }
+
+        async function fetchPendingRequests() {
+    try {
+        const token = localStorage.getItem("token"); 
+        if (!token) {
+            console.error("No token found. User is not authenticated.");
+            return;
+        }
+
+        const response = await fetch(`http://localhost:3000/friend-requests?user=${username}`, {
+            headers: { "Authorization": `Bearer ${token}` } // Fix: Send token
+        });
+
+        const result = await response.json();
+
+
+        const pendingRequestsDiv = document.getElementById("pending-requests");
+        pendingRequestsDiv.innerHTML = "";
+
+        if (!result.success || !Array.isArray(result.friendRequests)) {
+            console.error("Error fetching pending requests:", result.message);
+            return;
+        }
+
+        result.friendRequests.forEach(request => {
+            const div = document.createElement("div");
+            div.className = "friend";
+            div.innerHTML = `
+                <span>${request.sender}</span> 
+                <button onclick="respondFriendRequest('${request.id}', true)">Accept</button> 
+                <button onclick="respondFriendRequest('${request.id}', false)">Reject</button>
+            `;
+            pendingRequestsDiv.appendChild(div);
+        });
+
+    } catch (error) {
+        console.error("Error fetching pending requests:", error);
+    }
+}
+ async function searchUsers() {
+
+
+            const searchQuery = document.getElementById("search-input").value.trim();
+            if (!searchQuery) {
+                alert("Please enter a username to search.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/search-users?query=${encodeURIComponent(searchQuery)}&username=${encodeURIComponent(username)}`);
+                const result = await response.json();
+
+
+                const resultsContainer = document.getElementById("search-results");
+                resultsContainer.innerHTML = "";
+
+                if (!Array.isArray(result) || result.length === 0) {
+                    resultsContainer.innerHTML = "<p>No users found.</p>";
+                    return;
+                }
+
+                result.forEach(user => {
+                    const userDiv = document.createElement("div");
+                    userDiv.classList.add("friend");
+                    userDiv.innerHTML = `
+                        <span>${user.username}</span>
+                        <button onclick="sendFriendRequest('${user.username}')">Send Request</button>
+                    `;
+                    resultsContainer.appendChild(userDiv);
+                });
+
+            } catch (error) {
+                console.error("Search error:", error);
+                alert("Failed to search users. Try again later.");
+            }
+        }
+
+        async function sendFriendRequest(receiver) {
+    try {
+        const token = localStorage.getItem("token"); // Get token from localStorage
+        if (!token) {
+            alert("No token found. Please log in again.");
+            return;
+        }
+
+        const response = await fetch("http://localhost:3000/send-friend-request", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // ✅ Fix: Added token
+            },
+            body: JSON.stringify({ sender: username, receiver })
+        });
+
+        const result = await response.json();
+
+
+        if (!response.ok) {
+            alert(result.message);
+        } else {
+            alert("Friend request sent successfully!");
+        }
+
+    } catch (error) {
+        alert("Error sending friend request. Try again later.");
+        console.error("Error:", error);
+    }
+}
+async function respondFriendRequest(requestId, accept) {
+    try {
+        const token = localStorage.getItem("token"); 
+        if (!token) {
+            alert("You are not logged in. Please log in again.");
+            return;
+        }
+
+        const requestBody = { 
+            requestId, 
+            response: accept ? "Accepted" : "Rejected" 
+        };
+
+
+        const response = await fetch("http://localhost:3000/respond-friend-request", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        const result = await response.json();
+
+
+        if (!response.ok || !result.success) {
+            alert(result.message || "Failed to respond to the friend request.");
+            return;
+        }
+
+        alert(`Friend request ${accept ? "accepted" : "rejected"}!`);
+        fetchPendingRequests();  // Refresh list
+        fetchFriends();  
+
+    } catch (error) {
+        alert("Error responding to friend request. Try again later.");
+        console.error("Error:", error);
+    }
+}
+
+function startChat(friend) {
+    localStorage.setItem("chatFriend", friend); // Store the friend's name
+    window.location.href = "chat.html";  // Redirect to chat.html
+}
+
+        // Fetch data after a short delay on ge lopaad
+        window.onload = () => {
+
+    fetchFriends();
+    fetchPendingRequests();
+
+    setInterval(() => {
+        fetchFriends();
+        fetchPendingRequests();
+    }, 2000);
+};
+    </script>
+
+</body>
+</html>

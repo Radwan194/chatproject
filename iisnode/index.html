@@ -1,0 +1,87 @@
+<html>
+<head>
+    <title>iisnode logs</title>
+    <style type="text/css">
+        body
+        {
+            font-family: "Trebuchet MS" , Arial, Helvetica, sans-serif;
+        }
+        table
+        {
+            border-collapse: collapse;
+        }
+        td, th
+        {
+            border: 1px solid lightgray;
+            padding: 3px 7px 2px 7px;
+        }
+        th
+        {
+            text-align: left;
+            padding-top: 5px;
+            padding-bottom: 4px;
+            background-color: Gray;
+            color: #ffffff;
+        }
+        td.stderr
+        {
+            color: Red;
+        }
+    </style>
+</head>
+<body>
+    <table id="logFilesTable">
+        <tr>
+            <th>
+                Computer name
+            </th>
+            <th>
+                PID
+            </th>
+            <th>
+                Type
+            </th>
+            <th>
+                Created
+            </th>
+            <th>
+                Link
+            </th>
+        </tr>
+    </table>
+    <p id="lastUpdated"></p>
+    <script type="text/javascript">
+
+        // this is replaced with actual data at runtime by code in interceptor.js
+        var logFiles = [{"file":"DESKTOP-RPSO2DB-10532-stderr-1742740776887.txt","computername":"DESKTOP-RPSO2DB","pid":10532,"type":"stderr","created":1742740776887},{"file":"DESKTOP-RPSO2DB-10556-stderr-1742740604180.txt","computername":"DESKTOP-RPSO2DB","pid":10556,"type":"stderr","created":1742740604180},{"file":"DESKTOP-RPSO2DB-11508-stderr-1742701156309.txt","computername":"DESKTOP-RPSO2DB","pid":11508,"type":"stderr","created":1742701156309},{"file":"DESKTOP-RPSO2DB-19088-stderr-1742701158694.txt","computername":"DESKTOP-RPSO2DB","pid":19088,"type":"stderr","created":1742701158694},{"file":"DESKTOP-RPSO2DB-20244-stderr-1742701031083.txt","computername":"DESKTOP-RPSO2DB","pid":20244,"type":"stderr","created":1742701031083},{"file":"DESKTOP-RPSO2DB-20376-stderr-1742736902315.txt","computername":"DESKTOP-RPSO2DB","pid":20376,"type":"stderr","created":1742736902315},{"file":"DESKTOP-RPSO2DB-21360-stderr-1742701032924.txt","computername":"DESKTOP-RPSO2DB","pid":21360,"type":"stderr","created":1742701032924},{"file":"DESKTOP-RPSO2DB-22432-stderr-1742701155456.txt","computername":"DESKTOP-RPSO2DB","pid":22432,"type":"stderr","created":1742701155456},{"file":"DESKTOP-RPSO2DB-23516-stderr-1742742737173.txt","computername":"DESKTOP-RPSO2DB","pid":23516,"type":"stderr","created":1742742737173},{"file":"DESKTOP-RPSO2DB-23516-stdout-1742742737171.txt","computername":"DESKTOP-RPSO2DB","pid":23516,"type":"stdout","created":1742742737171},{"file":"DESKTOP-RPSO2DB-2628-stderr-1742742363452.txt","computername":"DESKTOP-RPSO2DB","pid":2628,"type":"stderr","created":1742742363452},{"file":"DESKTOP-RPSO2DB-2628-stdout-1742742363444.txt","computername":"DESKTOP-RPSO2DB","pid":2628,"type":"stdout","created":1742742363444},{"file":"DESKTOP-RPSO2DB-3192-stderr-1742701032054.txt","computername":"DESKTOP-RPSO2DB","pid":3192,"type":"stderr","created":1742701032054},{"file":"DESKTOP-RPSO2DB-3604-stderr-1742737132965.txt","computername":"DESKTOP-RPSO2DB","pid":3604,"type":"stderr","created":1742737132965},{"file":"DESKTOP-RPSO2DB-4160-stderr-1742737326705.txt","computername":"DESKTOP-RPSO2DB","pid":4160,"type":"stderr","created":1742737326705},{"file":"DESKTOP-RPSO2DB-4376-stderr-1742737246827.txt","computername":"DESKTOP-RPSO2DB","pid":4376,"type":"stderr","created":1742737246827},{"file":"DESKTOP-RPSO2DB-4736-stderr-1742701154235.txt","computername":"DESKTOP-RPSO2DB","pid":4736,"type":"stderr","created":1742701154235},{"file":"DESKTOP-RPSO2DB-4936-stderr-1742741631710.txt","computername":"DESKTOP-RPSO2DB","pid":4936,"type":"stderr","created":1742741631710},{"file":"DESKTOP-RPSO2DB-4936-stdout-1742741631707.txt","computername":"DESKTOP-RPSO2DB","pid":4936,"type":"stdout","created":1742741631707},{"file":"DESKTOP-RPSO2DB-5072-stderr-1742740776563.txt","computername":"DESKTOP-RPSO2DB","pid":5072,"type":"stderr","created":1742740776563},{"file":"DESKTOP-RPSO2DB-5264-stderr-1742740774010.txt","computername":"DESKTOP-RPSO2DB","pid":5264,"type":"stderr","created":1742740774010},{"file":"DESKTOP-RPSO2DB-7092-stderr-1742736901965.txt","computername":"DESKTOP-RPSO2DB","pid":7092,"type":"stderr","created":1742736901965},{"file":"DESKTOP-RPSO2DB-7460-stderr-1742740773707.txt","computername":"DESKTOP-RPSO2DB","pid":7460,"type":"stderr","created":1742740773707},{"file":"DESKTOP-RPSO2DB-9536-stderr-1742701157231.txt","computername":"DESKTOP-RPSO2DB","pid":9536,"type":"stderr","created":1742701157231}];
+        var lastUpdated = 1742742737423;
+        var date = new Date();
+
+        date.setTime(lastUpdated);
+        document.getElementById('lastUpdated').innerHTML = 'Index was last updated ' + date;
+
+        logFiles.sort(function (a, b) {
+            return b.created - a.created;
+        });
+
+        var logFilesTable = document.getElementById("logFilesTable");
+        for (var i = 0; i < logFiles.length; i++) {
+            var logFile = logFiles[i];
+            date.setTime(logFile.created);
+            var row = logFilesTable.insertRow(-1);
+            var computerNameCell = row.insertCell(0);
+            var pidCell = row.insertCell(1);
+            var typeCell = row.insertCell(2);
+            var dateCell = row.insertCell(3);
+            var logCell = row.insertCell(4);
+            computerNameCell.innerHTML = logFile.computername;
+            pidCell.innerHTML = logFile.pid.toString();
+            typeCell.innerHTML = logFile.type;
+            typeCell.setAttribute('class', logFile.type);
+            dateCell.innerHTML = date.toString();
+            logCell.innerHTML = '<a href="' + logFile.file + '">log</a>';
+        };
+
+    </script>
+</body>
+</html>

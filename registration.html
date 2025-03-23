@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+            color: white;
+        }
+
+        .register-container {
+            background: rgba(30, 30, 30, 0.9);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 15px rgba(0, 255, 170, 0.2);
+            width: 320px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 450px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+            transition: 0.3s ease-in-out;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #00ffaa;
+            text-shadow: 0px 0px 10px rgba(0, 255, 170, 0.8);
+        }
+
+        input:focus {
+            border-color: #00ffaa;
+            box-shadow: 0px 0px 8px rgba(0, 255, 170, 0.5);
+        }
+
+        input.error {
+            border-color: red;
+            box-shadow: 0px 0px 8px red;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00ffaa, #00ccff);
+            color: #1e1e1e;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #00ccff, #00ffaa);
+            transform: scale(1.05);
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+            text-shadow: 0px 0px 5px rgba(255, 0, 0, 0.8);
+        }
+
+        .success-message {
+            color: #00ffaa;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+            text-shadow: 0px 0px 5px rgba(0, 255, 170, 0.8);
+        }
+
+        .login-link {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #00ffaa;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <h2>Register</h2>
+        <input type="text" id="reg-username" placeholder="Username">
+        <p class="error-message" id="reg-username-error">Required</p>
+
+        <input type="password" id="reg-password" placeholder="Password">
+        <p class="error-message" id="reg-password-error">Required</p>
+
+        <button onclick="register()">Register</button>
+        <p class="error-message" id="reg-server-error"></p>
+        <p class="success-message" id="reg-success">User registered successfully!</p>
+
+        <p class="login-link">Already have an account? <a href="login.html">Login</a></p>
+    </div>
+
+    <script>
+        async function register() {
+            const usernameInput = document.getElementById("reg-username");
+            const passwordInput = document.getElementById("reg-password");
+            const usernameError = document.getElementById("reg-username-error");
+            const passwordError = document.getElementById("reg-password-error");
+            const serverError = document.getElementById("reg-server-error");
+            const successMessage = document.getElementById("reg-success");
+
+            // Reset error messages
+            usernameError.style.display = "none";
+            passwordError.style.display = "none";
+            serverError.textContent = "";
+            serverError.style.display = "none";
+            successMessage.style.display = "none";
+            usernameInput.classList.remove("error");
+            passwordInput.classList.remove("error");
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            // Check if fields are empty
+            if (!username) {
+                usernameError.style.display = "block";
+                usernameInput.classList.add("error");
+            }
+            if (!password) {
+                passwordError.style.display = "block";
+                passwordInput.classList.add("error");
+            }
+            if (!username || !password) return; // Stop execution if fields are empty
+
+            // Send registration request
+            try {
+                const response = await fetch("http://localhost:3000/add-user", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    successMessage.style.display = "block";
+                    usernameInput.value = "";
+                    passwordInput.value = "";
+                    setTimeout(() => {
+                        window.location.href = "index.html"; // Redirect after successful registration
+                    }, 2000);
+                } else {
+                    serverError.textContent = result.message;
+                    serverError.style.display = "block";
+                }
+            } catch (error) {
+                serverError.textContent = "Server error. Try again later.";
+                serverError.style.display = "block";
+            }
+        }
+    </script>
+
+</body>
+</html>

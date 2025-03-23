@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: "Poppins", Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #messages-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #2e2e2e;
+            border-radius: 8px;
+            color: #fff;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .from-me {
+            background: #4CAF50;
+            /* Green for messages sent by the current user */
+        }
+
+        .from-friend {
+            background: #007BFF;
+            /* Blue for messages from the friend */
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            width: 70%;
+            background: #1e1e1e;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            outline: none;
+            color: #ffffff;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"]:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 8px rgba(26, 115, 232, 0.5);
+        }
+
+        button {
+            padding: 12px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: #1a73e8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Chat with <span id="friend-name"></span></h2>
+
+    <!-- Chat Container -->
+    <div id="messages-container"></div>
+
+    <!-- Message Input -->
+    <input type="text" id="message-input" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        const username = localStorage.getItem("username");
+        const friend = localStorage.getItem("chatFriend"); // Get friend name from localStorage
+        document.getElementById("friend-name").textContent = friend;
+
+        let lastMessageTime = 0; // To track the last message's timestamp
+
+        const messagesContainer = document.getElementById("messages-container");
+        const messageInput = document.getElementById("message-input");
+
+        // Function to poll messages between the current user and the selected friend
+        async function pollMessages() {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    console.error("No token found. User is not authenticated.");
+                    return;
+                }
+
+                // Step 1: Get userId for the logged-in user
+                const userResponse = await fetch(`http://localhost:3000/getuser?username=${username}`, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                const userData = await userResponse.json();
+                if (!userData.success) {
+                    console.error("Failed to fetch user ID.");
+                    return;
+                }
+                const userId = userData.userId; // Extract user ID
+
+                // Step 2: Get userId for the friend
+                const friendResponse = await fetch(`http://localhost:3000/getuser?username=${friend}`, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                const friendData = await friendResponse.json();
+                if (!friendData.success) {
+                    console.error("Failed to fetch friend ID.");
+                    return;
+                }
+                const friendId = friendData.userId; // Extract friend's user ID
+                // Step 3: Fetch messages using userId and friendId
+                const response = await fetch(`http://localhost:3000/messages?user1=${userId}&user2=${friendId}`, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success && Array.isArray(data.messages)) {
+                    messagesContainer.innerHTML = ""; // Clear existing messages
+
+                    data.messages.forEach(message => {
+                        const messageDiv = document.createElement("div");
+                        messageDiv.classList.add("message");
+
+                        // Use senderId to determine message ownership
+                        if (message.senderId == userId) {
+                            messageDiv.classList.add("from-me");
+                        } else {
+                            messageDiv.classList.add("from-friend");
+                        }
+
+                        // Display message with correct sender name
+                        messageDiv.innerHTML = `<strong>${message.senderId == userId ? username : friend}</strong>: ${message.message}`;
+                        messagesContainer.appendChild(messageDiv);
+                    });
+
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to latest message
+                }
+            } catch (error) {
+                console.error("Error fetching messages:", error);
+            }
+        }
+        // Function to send a message to the backend
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === "") return;
+
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    console.error("No token found. User is not authenticated.");
+                    return;
+                }
+
+                // Step 1: Get userId for the sender (current user)
+                const userResponse = await fetch(`http://localhost:3000/getuser?username=${username}`, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                const userData = await userResponse.json();
+                if (!userData.success) {
+                    console.error("Failed to fetch user ID.");
+                    return;
+                }
+                const senderId = userData.userId;
+
+                // Step 2: Get userId for the receiver (friend)
+                const friendResponse = await fetch(`http://localhost:3000/getuser?username=${friend}`, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                const friendData = await friendResponse.json();
+                if (!friendData.success) {
+                    console.error("Failed to fetch friend ID.");
+                    return;
+                }
+                const receiverId = friendData.userId;
+
+                // Step 3: Send message using senderId and receiverId
+                const response = await fetch("http://localhost:3000/send-message", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        senderId: senderId,  // Use IDs instead of usernames
+                        receiverId: receiverId,
+                        message: message
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    messageInput.value = "";  // Clear the input field
+                    pollMessages();  // Refresh the chat by polling new messages
+                } else {
+                    alert(result.message);  // Show error if message sending fails
+                }
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
+        }
+
+        // Polling every 5 seconds to check for new messages
+        setInterval(pollMessages, 2000);
+
+        // Fetch the initial messages when the page loads
+        window.onload = pollMessages;
+    </script>
+
+</body>
+
+</html>
