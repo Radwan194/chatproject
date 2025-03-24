@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const SECRET_KEY = "my_name";
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -295,6 +295,6 @@ app.get("/getuser", (req, res) => {
     });
 });
 // Start server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });

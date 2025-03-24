@@ -1,0 +1,59 @@
+1. Install IIS (if not installed)
+Open PowerShell as Administrator and run:
+
+sh
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebServer
+Restart your computer.
+
+2. Install IIS Node.js Module
+Install iisnode to allow IIS to run Node.js apps:
+
+Download from: https://github.com/Azure/iisnode
+
+Install and restart IIS.
+dont forget to install URL REwrite module too 
+Put your folder in this path  C:\inetpub\wwwroot\
+
+3. Configure IIS to Serve Your App
+Move your project to C:\inetpub\wwwroot\chatproject
+
+Open IIS Manager (inetmgr in Run).
+
+Add a new site:
+
+Site name: ChatApp
+
+Physical path: C:\inetpub\wwwroot\chatproject
+
+Port: the port you chose in your backend(make sure it doesn't have a parent process working on it)
+
+Set Node.js as the backend:
+
+Create a web.config in your project folder:
+<configuration>
+	<system.webServer>
+		<handlers>
+			<add name="iisnode" path="app.js" verb="*" modules="iisnode" />
+		</handlers>
+		<rewrite>
+			<rules>
+				<rule name="ChatApp">
+					<match url="/*" />
+					<action type="Rewrite" url="app.js" />
+				</rule>
+			</rules>
+		</rewrite>
+	</system.webServer>
+</configuration>
+Give Permissions to your folder :
+In IIS Manager click on your server and open edit permissions (from the right panel)
+Go to security  and click edit
+Click add then advanced then find now
+Find IIS_USERS and click ok and ok and give it full control(that is what i did)
+
+Allow IIS to Access Node.js:
+Open Windows Firewall and allow traffic for your app.(this can be really tricky so just ask AI to guide you throught it as it is really important)
+
+Make sure no process is running on the port so it doesnt give an errors(kill process if not neccessary or change the port of both backend and IIS Server)
+
+Maybe some errors are going to arrise that has something to do with the web configuration like locking elements just ask AI and it will have your solution
